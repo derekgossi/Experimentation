@@ -36,15 +36,17 @@ max_components = 8
 
 # Count the number of clusters the DPGMM chooses
 num_clusters = []
+size_sample = []
 
 # Try clustering at different sample sizes
 for iteration in range(int(np.floor(len(gaussian_data) / 10)) - 2):
     # Number of samples to use
     max_sample_value = ((iteration + 2) * 10) 
     sample_set = gaussian_data[0:max_sample_value]
+    size_sample.append(max_sample_value - 0)
     
     # Fit Dirichlet Process Gaussian Mixture Model
-    dpgmm_model = DPGMM(n_components=max_components)
+    dpgmm_model = DPGMM(n_components = max_components, n_iter=1000, alpha=1.0)
     fitted_dpgmm = dpgmm_model.fit(sample_set)
     dpgmm_predictions = fitted_dpgmm.predict(gaussian_data)
     num_clusters.append(len(set(dpgmm_predictions)))
@@ -61,5 +63,12 @@ colors = [color_labels[unique_categories.index(i)] for i in gaussian_data['predi
 plt.scatter(gaussian_data['x'], gaussian_data['y'], c=colors)
 plt.xlim([-12,12])
 plt.ylim([-12,12])
+plt.show()
+
+# Plot how many clusters DPGMM chose based on size of dataset
+plt.plot(size_sample, num_clusters)
+plt.xlabel('Sample Size')
+plt.ylabel('Number of Clusters')
+plt.title('Dirichlet Process Gaussian Mixture Model Predicted Clusters by Sample Size')
 plt.show()
 
