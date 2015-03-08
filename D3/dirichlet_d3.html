@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+  font-family: "Lato", "HelveticaNeue-Light", "Helvetica Neue Light", 
+                      "Helvetica Neue", Helvetica, Arial, 
+                      "Lucida Grande", sans-serif;
+}
+
+#alpha_labels {
+  float: left;
+}
+
+.alpha_label {
+    float: left;
+    width: 125px;
+    margin-left: 90px;
+    margin-right: 15px;
+    margin-bottom: 5px;
+    font-size: 20px;
+}
+
+#alphas {
+    float:left;
+    margin-left:10px;
+}
+
+#alphas > span {
+    float: left;
+    width:200px;
+    margin:15px;
+}
+
+#pdf {
+  width: 400px;
+  margin-left: 210px;
+  font-size: 24px;
+  font-weight: 200;
+}
+
+</style>
+<body>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.11.3/themes/smoothness/jquery-ui.css">
+<script src="//code.jquery.com/jquery-1.10.2.js"></script>
+<script src="//code.jquery.com/ui/1.11.3/jquery-ui.js"></script>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+
+<h1>Dirichlet Distrubution in the Unit Simplex</h1>
+<h3>Shape Parameters</h3>
+
+<div id="alpha_labels">
+  <div id="alpha1_label" class="alpha_label">&#945<sub>1</sub> = 1.0</div>
+  <div id="alpha2_label" class="alpha_label">&#945<sub>2</sub> = 1.0</div>
+  <div id="alpha3_label" class="alpha_label">&#945<sub>3</sub> = 1.0</div>
+</div>
+
+<div id="alphas">
+  <span id="alpha1"></span>
+  <span id="alpha2"></span>
+  <span id="alpha3"></span>
+</div>
+
+<div id="pdf">
+f<sub>Dir</sub>(<b>x</b> = (0.3, 0.3, 0.3) | <b>&#945</b>) = 2.0
+</div>
+
+<script>
+
+// Constants for gamma function
+var g = 7;
+var C = [0.99999999999980993, 676.5203681218851, 
+    -1259.1392167224028, 771.32342877765313, 
+    -176.61502916214059, 12.507343278686905, 
+    -0.13857109526572012, 9.9843695780195716 * Math.pow(10, -6), 
+    1.5056327351493116 * Math.pow(10, -7)];
+
+// Calculates gamma function of z (via http://jsfiddle.net/Fzy9C/)
+function gamma(z) {
+    if (z < 0.5) return Math.PI / (Math.sin(Math.PI * z) * gamma(1 - z));
+    else {
+        z -= 1;
+
+        var x = C[0];
+        for (var i = 1; i < g + 2; i++)
+        x += C[i] / (z + i);
+
+        var t = z + g + 0.5;
+        return Math.sqrt(2 * Math.PI) * Math.pow(t, (z + 0.5)) * Math.exp(-t) * x;
+    }
+}
+
+// Calculates Beta function of 3-d alpha vector
+function calcBeta(alp1, alp2, alp3) {
+    beta_num = gamma(alp1) * gamma(alp2) * gamma(alp3);
+    beta_den = gamma(parseFloat(alp1) + parseFloat(alp2) + parseFloat(alp3));
+    return beta_num / beta_den;
+}
+
+// Calculates Dirichlet probability of 3-d alpha and x vectors
+function calcDirichletProb(alp1, alp2, alp3, x1, x2, x3) {
+    beta_alp = calcBeta(alp1, alp2, alp3);
+    prod = Math.pow(x1, alp1 - 1) * Math.pow(x2, alp2 - 1) * Math.pow(x3, alp3 - 1);
+    return (1 / beta_alp) * prod;
+}
+
+// Reshades simplex based on user input
+function reshadePoly(a1, a2, a3) {
+    svg.selectAll('path')
+        .each(function(d,i) { 
+            x1 = this.getAttribute("x");
+            x2 = this.getAttribute("y");
+            x3 = this.getAttribute("z");
+            dirProb = calcDirichletProb(a1, a2, a3, x1, x2, x3);
+            d3.select(this).attr("dir", dirProb);
+            if(dirProb < .01) {var dirFill = "#ffffff";}
+            else if(dirProb < .05) {var dirFill = "#f6fafc";}
+            else if(dirProb < .1) {var dirFill = "#edf5fa";}
+            else if(dirProb < .15) {var dirFill = "#e4f0f8";}
+            else if(dirProb < .2) {var dirFill = "#dbebf6";}
+            else if(dirProb < .25) {var dirFill = "#d3e6f3";}
+            else if(dirProb < .3) {var dirFill = "#cae1f1";}
+            else if(dirProb < .35) {var dirFill = "#c1dcef";}
+            else if(dirProb < .4) {var dirFill = "#b8d7ed";}
+            else if(dirProb < .45) {var dirFill = "#afd2eb";}
+            else if(dirProb < .5) {var dirFill = "#a7cde8";}
+            else if(dirProb < .55) {var dirFill = "#9ec8e6";}
+            else if(dirProb < .6) {var dirFill = "#95c3e4";}
+            else if(dirProb < .65) {var dirFill = "#8cbee2";}
+            else if(dirProb < .7) {var dirFill = "#83b9e0";}
+            else if(dirProb < .75) {var dirFill = "#7bb4dd";}
+            else if(dirProb < .8) {var dirFill = "#72afdb";}
+            else if(dirProb < .85) {var dirFill = "#69aad9";}
+            else if(dirProb < .9) {var dirFill = "#60a5d7";}
+            else if(dirProb < .95) {var dirFill = "#57a0d5";}
+            else if(dirProb < 1) {var dirFill = "#4f9bd2";}
+            else if(dirProb < 2) {var dirFill = "#4696d0";}
+            else if(dirProb < 3) {var dirFill = "#3d91ce";}
+            else if(dirProb < 4) {var dirFill = "#348ccc";}
+            else if(dirProb < 5) {var dirFill = "#2b87ca";}
+            else if(dirProb < 6) {var dirFill = "#2382c7";}
+            else if(dirProb < 7) {var dirFill = "#1a7dc5";}
+            else if(dirProb < 8) {var dirFill = "#1178c3";}
+            else if(dirProb < 9) {var dirFill = "#0873c1";}
+            else {var dirFill = "#006fbf";}
+
+            d3.select(this).attr("fill", dirFill);
+            // this.transition(500).attr("fill", "#CCC");
+        });
+}
+
+// Define constants
+var margin = {top: 20, right: 20, bottom: 30, left: 40},
+    width = 700 - margin.left - margin.right,
+    height = 510 - margin.top - margin.bottom,
+    sideLen = width - 100,
+    leftX = (width - sideLen) / 2,
+    rightX = sideLen + ((width - sideLen) / 2),
+    midX = (width)/2,
+    triHeight = Math.sqrt((3*Math.pow(sideLen, 2)) / 4);
+
+// Sliders
+$( "#alphas > span" ).each(function() {
+      $( this ).empty().slider({
+        value: 1000,
+        min: 0,
+        max: 5000,
+        range: 'min',
+        slide: function( event, ui ) {
+            // Refresh alpha label values
+            $('#alpha1_label').html("&#945<sub>1</sub> = " + ($('#alpha1').slider("value") / 1000).toFixed(1));
+            $('#alpha2_label').html("&#945<sub>2</sub> = " + ($('#alpha2').slider("value") / 1000).toFixed(1));
+            $('#alpha3_label').html("&#945<sub>3</sub> = " + ($('#alpha3').slider("value") / 1000).toFixed(1));
+
+            // Reshade simplex
+            reshadePoly(($('#alpha1').slider("value") / 1000), 
+                                  ($('#alpha2').slider("value") / 1000), 
+                                  ($('#alpha3').slider("value") / 1000));
+        }
+    });
+});
+
+// SVG with labels
+var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+// svg.append("text")
+//     .attr("class", "x label")
+//     .attr("text-anchor", "end")
+//     .attr("x", leftX)
+//     .attr("y", height)
+//     .attr("transform", "rotate(45)")
+//     .text("(1, 0, 0)");
+
+// Function to draw lines
+var lineFunction = d3.svg.line()
+    .x(function(d) { return d.x; })
+    .y(function(d) { return d.y; })
+    .interpolate("linear");
+
+// Constants defining how dense we want our triangles in the simplex
+var density = 50;
+var tWidth = sideLen / density;
+var tHeight = Math.sqrt((3*Math.pow(tWidth, 2)) / 4);
+
+// Draw trianges in simplex and attach x vector values
+for(var i=0; i<density; i++) {
+    for(var j=0; j<density-i; j++) {
+        // Append each triangle
+        svg.append("path")
+            .attr("d", lineFunction([
+                    { "x": leftX + (tWidth / 2)*j + i*tWidth,   "y": height - tHeight*j},  
+                    { "x": leftX + (tWidth / 2)*(j+1) + i*tWidth,  "y": height - tHeight*(j+1)},
+                    { "x": leftX + (tWidth)*(j/2+1) + i*tWidth,  "y": height - tHeight*j}, 
+                    { "x": leftX+ (tWidth / 2)*j + i*tWidth,   "y": height - tHeight*j}
+            ]))
+            .attr("fill", "#4696d0")
+            .attr("x", (1 - ((j+i+1) / (density))) + (1/(density*2)))
+            .attr("y", (i / density)+ (1/(density*2)))
+            .attr("z", (j / density)+ (1/(density*2)))
+            .attr("dir", 2)
+            .on("mouseover", function(){
+                d3.select(this).attr("stroke", "red")
+                    .attr("stroke-width", "2px");
+                console.log(d3.select(this).attr("dir"));
+
+            })
+            .on("mouseout", function(){
+                d3.select(this).attr("stroke", "none");
+            });
+
+    }
+}
+
+for(var i=0; i<density; i++) {
+    for(var j=0; j<density-i-1; j++) {
+        svg.append("path")
+            .attr("d", lineFunction([
+                    { "x": leftX + (tWidth)*(j/2+1) + i*tWidth,  "y": height - tHeight*j}, 
+                    { "x": leftX + (tWidth / 2)*(j+1) + i*tWidth,  "y": height - tHeight*(j+1)},
+                    { "x": leftX + (tWidth)*(j/2+1.5) + i*tWidth,  "y": height - tHeight*(j+1)}, 
+                    { "x": leftX + (tWidth)*(j/2+1) + i*tWidth,  "y": height - tHeight*j},
+            ]))
+            .attr("fill", "#4696d0")
+            .attr("x", (1 - ((j+i+2) / (density))) + (1/(density*2)))
+            .attr("y", (i / density)+ (1/(density*2)))
+            .attr("z", (j / density)+ (1/(density*2)))
+            .attr("dir", 2)
+            .on("mouseover", function(){
+                d3.select(this).attr("stroke", "red")
+                    .attr("stroke-width", "2px");
+                prob = parseFloat(d3.select(this).attr("dir")).toFixed(1);
+                x = parseFloat(this.getAttribute("x")).toFixed(1);
+                y = parseFloat(this.getAttribute("y")).toFixed(1);
+                z = parseFloat(this.getAttribute("z")).toFixed(1);
+                d3.select('#pdf').html("f<sub>Dir</sub>(<b>x</b> = (" + 
+                                                      x + ", " + y + ", " + z +
+                                                      " | <b>&#945</b>) = " + prob);
+            })
+            .on("mouseout", function(){
+                d3.select(this).attr("stroke", "none");
+            });
+    }
+}
+
+</script>
